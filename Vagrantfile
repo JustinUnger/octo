@@ -17,17 +17,65 @@ end
    ctrl.vm.box = "ubuntu/trusty64"
    ctrl.vm.hostname = "controller"
 
-   ctrl.vm.provision "shell", inline: "DEBIAN_FRONTEND=noninteractive apt-get install -q -y mariadb-server python-mysqldb" 
-   ctrl.vm.provision "shell", inline: "sudo cp /vagrant/mysqld_openstack.cnf /etc/mysql/conf.d/mysqld_openstack.cnf"
-   ctrl.vm.provision "shell", inline: "service mysql restart"
-   ctrl.vm.provision "shell", inline: "apt-get install -y rabbitmq-server"
-   ctrl.vm.provision "shell", inline: "rabbitmqctl add_user openstack secret"
-   ctrl.vm.provision "shell", inline: "rabbitmqctl set_permissions openstack \".*\" \".*\" \".*\""
-   ctrl.vm.provision "shell", inline: "echo \"manual\" > /etc/init/keystone.override"
-   ctrl.vm.provision "shell", inline: "apt-get install -y keystone python-openstackclient apache2 libapache2-mod-wsgi memcached python-memcache"
-   ctrl.vm.provision "shell", inline: "mysql -u root < /vagrant/keystone_db_init.sql"
-   ctrl.vm.provision "shell", inline: "cp /vagrant/keystone.conf /etc/keystone/keystone.conf"
-   ctrl.vm.provision "shell", inline: "su -s /bin/sh -c \"keystone-manage db_sync\" keystone"
+   ctrl.vm.provision "shell", inline: <<-SHELL
+	#
+	# install and configure mariadb (mysql) server for identity service (keystone)
+	#
+	DEBIAN_FRONTEND=noninteractive apt-get install -q -y mariadb-server python-mysqldb
+	sudo cp /vagrant/mysqld_openstack.cnf /etc/mysql/conf.d/mysqld_openstack.cnf
+
+	#
+	# install and configure rabbitmq
+	#
+	service mysql restart
+	apt-get install -y rabbitmq-server
+	rabbitmqctl add_user openstack secret
+	rabbitmqctl set_permissions openstack ".*" ".*" ".*"
+
+	#
+   	# setup identity service (keystone)
+	#
+        echo "manual" > /etc/init/keystone.override
+	apt-get install -y keystone python-openstackclient apache2 libapache2-mod-wsgi memcached python-memcache
+	mysql -u root < /vagrant/keystone_db_init.sql
+	cp /vagrant/keystone.conf /etc/keystone/keystone.conf
+	su -s /bin/sh -c "keystone-manage db_sync" keystone
+
+	#
+  	# set up apache for keystone
+	#
+	cp /vagrant/keystone-apache2.conf /etc/apache2/apache2.conf
+	cp /vagrant/wsgi-keystone.conf /etc/apache2/sites-available/wsgi-keystone.conf
+	ln -s /etc/apache2/sites-available/wsgi-keystone.conf /etc/apache2/sites-enabled
+	mkdir -p /var/www/cgi-bin/keystone
+	curl http://git.openstack.org/cgit/openstack/keystone/plain/httpd/keystone.py?h=stable/kilo > /var/www/cgi-bin/keystone/main 
+	cp /var/www/cgi-bin/keystone/main /var/www/cgi-bin/keystone/admin
+	chown -R keystone:keystone /var/www/cgi-bin/keystone
+	chmod 755 /var/www/cgi-bin/keystone/*
+	service apache2 restart
+
+	#
+	# create tenants, users, and roles
+	#
+	export OS_SERVICE_TOKEN=1d71965befaa52845263
+	export OS_SERVICE_ENDPOINT=http://controller:35357/v2.0
+	keystone tenant-create --name admin --description "Admin Tenant"
+	keystone user-create --name admin --pass secret --email admin@domain.org
+	keystone role-create --name admin
+	keystone user-role-add --user admin --tenant admin --role admin
+
+	keystone tenant-create --name demo --description "Demo Tenant"
+	keystone user-create --name demo --tenant demo --pass secret --email demo@domain.org
+
+	keystone tenant-create --name service --description "Service Tenant"
+
+	#
+	# create service entry and API endpoint
+	#
+	keystone service-create --name keystone --type identity --description "OpenStack Identity"
+	keystone endpoint-create --service-id $(keystone service-list | awk '/ identity / {print $2}') --publicurl http://controller:5000/v2.0 --internalurl http://controller:5000/v2.0 --adminurl http://controller:35357/v2.0 --region regionOne
+   SHELL
+   
   end
 
   config.vm.define "net" do |net|
