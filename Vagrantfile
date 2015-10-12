@@ -55,25 +55,25 @@ end
 	service apache2 restart
 
 	#
-	# create tenants, users, and roles
-	#
-	export OS_SERVICE_TOKEN=1d71965befaa52845263
-	export OS_SERVICE_ENDPOINT=http://controller:35357/v2.0
-	keystone tenant-create --name admin --description "Admin Tenant"
-	keystone user-create --name admin --pass secret --email admin@domain.org
-	keystone role-create --name admin
-	keystone user-role-add --user admin --tenant admin --role admin
-
-	keystone tenant-create --name demo --description "Demo Tenant"
-	keystone user-create --name demo --tenant demo --pass secret --email demo@domain.org
-
-	keystone tenant-create --name service --description "Service Tenant"
-
-	#
 	# create service entry and API endpoint
 	#
-	keystone service-create --name keystone --type identity --description "OpenStack Identity"
-	keystone endpoint-create --service-id $(keystone service-list | awk '/ identity / {print $2}') --publicurl http://controller:5000/v2.0 --internalurl http://controller:5000/v2.0 --adminurl http://controller:35357/v2.0 --region regionOne
+	export OS_TOKEN=1d71965befaa52845263
+	export OS_URL=http://controller:35357/v2.0
+	openstack service create --name keystone --description "OpenStack Identity" identity
+	openstack endpoint create --publicurl http://controller:5000/v2.0 --internalurl http://controller:5000/v2.0 --adminurl http://controller:35357/v2.0 --region regionOne identity
+
+	#
+	# create tenants, users, and roles
+	#
+	openstack project create --description "Admin Project" admin
+	openstack user create --password "secret" admin
+	openstack role create admin
+	openstack role add --project admin --user admin admin
+	openstack project create --description "Service Project" service
+	openstack project create --description "Demo Project" demo
+	openstack user create --password "secret" demo
+	openstack role create user
+	openstack role add --project demo --user demo user
    SHELL
    
   end
