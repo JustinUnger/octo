@@ -74,6 +74,26 @@ end
 	openstack user create --password "secret" demo
 	openstack role create user
 	openstack role add --project demo --user demo user
+
+	#
+	# verify keystone functionality
+	#
+	sed -i 's/\ admin_token_auth//' /etc/keystone/keystone-paste.ini 
+	unset OS_TOKEN OS_URL
+	openstack --os-auth-url http://controller:35357 --os-project-name admin --os-username admin --os-auth-type password --os-password secret token issue
+	openstack --os-auth-url http://controller:35357 --os-project-domain-id default --os-user-domain-id default --os-project-name admin --os-username admin --os-auth-type password --os-password secret token issue
+	openstack --os-auth-url http://controller:35357 --os-project-name admin --os-username admin --os-auth-type password --os-password secret project list
+	openstack --os-auth-url http://controller:35357 --os-project-name admin --os-username admin --os-auth-type password --os-password secret user list
+	openstack --os-auth-url http://controller:35357 --os-project-name admin --os-username admin --os-auth-type password --os-password secret role list
+	openstack --os-auth-url http://controller:5000 --os-project-domain-id default --os-user-domain-id default --os-project-name demo --os-username demo --os-auth-type password --os-password secret token issue
+	# this command is expected to fail
+	openstack --os-auth-url http://controller:5000 --os-project-domain-id default --os-user-domain-id default --os-project-name demo --os-username demo --os-auth-type password --os-password secret user list || true
+	
+	#
+	#
+	#
+	cp /vagrant/admin-openrc.sh .
+	cp /vagrant/demo-openrc.sh .
    SHELL
    
   end
