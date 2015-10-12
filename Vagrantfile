@@ -1,7 +1,7 @@
 Vagrant.configure(2) do |config|
 
 config.vm.provider "virtualbox" do |v|
-  v.memory = 1024
+  v.memory = 2048
   v.cpus = 4
 end
 
@@ -90,10 +90,37 @@ end
 	openstack --os-auth-url http://controller:5000 --os-project-domain-id default --os-user-domain-id default --os-project-name demo --os-username demo --os-auth-type password --os-password secret user list || true
 	
 	#
-	#
+	# 
 	#
 	cp /vagrant/admin-openrc.sh .
 	cp /vagrant/demo-openrc.sh .
+
+	#
+	# Install and configure image server (glance)
+	#
+	mysql -u root < /vagrant/glance_db_init.sql
+	source admin-openrc.sh
+	openstack user create --password secret glance
+	openstack role add --project service --user glance admin
+	openstack service create --name glance --description "OpenStack Image service" image
+	openstack endpoint create --publicurl http://controller:9292 --internalurl http://controller:9292 --adminurl http://controller:9292 --region regionOne image
+	apt-get install -y glance python-glanceclient
+	cp /vagrant/glance-api.conf /etc/glance/glance-api.conf
+	cp /vagrant/glance-registry.conf /etc/glance/glance-registry.conf
+	su -s /bin/sh -c "glance-manage db_sync" glance
+	service glance-registry restart
+	service glance-api restart
+	rm -f /var/lib/glance/glance.sqlite
+
+	#
+	# lets take glance for a spin. download cirros from the internet and put it in glance
+	#
+	source admin-openrc.sh
+	mkdir /tmp/images
+	wget -P /tmp/images http://download.cirros-cloud.net/0.3.4/cirros-0.3.4-x86_64-disk.img
+	glance image-create --name "cirros-0.3.4-x86_64" --file /tmp/images/cirros-0.3.4-x86_64-disk.img --disk-format qcow2 --container-format bare --visibility public --progress
+	glance image-list
+	
    SHELL
    
   end
