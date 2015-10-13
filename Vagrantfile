@@ -1,11 +1,12 @@
 Vagrant.configure(2) do |config|
 
 config.vm.provider "virtualbox" do |v|
-  v.memory = 2048
-  v.cpus = 4
+  v.memory = 3072
+  v.cpus = 2
 end
 
-  config.vm.network "private_network", type: "dhcp"
+  config.hostmanager.enabled = true
+
   config.vm.provision "shell", inline: "apt-get update"
   config.vm.provision "shell", inline: "apt-get install -y ntp"
   config.vm.provision "shell", inline: "apt-get install -y ubuntu-cloud-keyring"
@@ -16,6 +17,7 @@ end
   config.vm.define "ctrl" do |ctrl|
    ctrl.vm.box = "ubuntu/trusty64"
    ctrl.vm.hostname = "controller"
+   ctrl.vm.network "private_network", ip: "172.16.172.10"
 
    ctrl.vm.provision "shell", inline: <<-SHELL
 	#
@@ -145,9 +147,13 @@ end
 
   config.vm.define "net" do |net|
    net.vm.box = "ubuntu/trusty64"
+   net.vm.hostname = "net"
+   net.vm.network "private_network", ip: "172.16.172.12"
   end
 
   config.vm.define "cpu" do |cpu|
    cpu.vm.box = "ubuntu/trusty64"
+   cpu.vm.hostname = "cpu"
+   cpu.vm.network "private_network", ip: "172.16.172.11"
   end
 end
