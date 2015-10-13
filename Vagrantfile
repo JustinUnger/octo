@@ -141,6 +141,22 @@ end
 	service nova-conductor restart
 	service nova-novncproxy restart
 	rm -rf /var/lib/nova/nova.sqlite
+
+	#
+	# install and configure neutron (network service)
+	#
+	mysql -u root < /vagrant/neutron_db_init.sql
+	openstack user create --password secret neutron
+	openstack role add --project service --user neutron admin
+	openstack service create --name neutron --description "OpenStack Networking" network
+	openstack endpoint create --publicurl http://controller:9696 --internalurl http://controller:9696 --adminurl http://controller:9696 --region regionOne network
+	apt-get install -y neutron-server neutron-plugin-ml2 python-neutronclient
+	cp /vagrant/neutron.conf /etc/neutron/neutron.conf
+	cp /vagrant/ml2_conf.ini /etc/neutron/plugins/ml2/ml2_conf.ini
+	su -s /bin/sh -c "neutron-db-manage --config-file /etc/neutron/neutron.conf --config-file /etc/neutron/plugins/ml2/ml2_conf.ini upgrade head" neutron
+	service nova-api restart
+	service neutron-server restart
+	neutron ext-list
    SHELL
    
   end
