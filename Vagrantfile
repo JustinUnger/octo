@@ -120,7 +120,25 @@ end
 	wget -P /tmp/images http://download.cirros-cloud.net/0.3.4/cirros-0.3.4-x86_64-disk.img
 	glance image-create --name "cirros-0.3.4-x86_64" --file /tmp/images/cirros-0.3.4-x86_64-disk.img --disk-format qcow2 --container-format bare --visibility public --progress
 	glance image-list
-	
+
+	#
+	# install and configure nova (compute service)
+	#
+	mysql -u root < /vagrant/nova_db_init.sql
+	openstack user create --password secret nova
+	openstack role add --project service --user nova admin
+	openstack service create --name nova --description "OpenStack Compute" compute
+	openstack endpoint create --publicurl http://controller:8774/v2/%\\(tenant_id\\)s --internalurl http://controller:8774/v2/%\\(tenant_id\\)s --adminurl http://controller:8774/v2/%\\(tenant_id\\)s --region regionOne compute
+	apt-get install -y nova-api nova-cert nova-conductor nova-consoleauth nova-novncproxy nova-scheduler python-novaclient
+	cp /vagrant/nova.conf /etc/nova/nova.conf
+	su -s /bin/sh -c "nova-manage db sync" nova	
+	service nova-api restart
+	service nova-cert restart
+	service nova-consoleauth restart
+	service nova-scheduler restart
+	service nova-conductor restart
+	service nova-novncproxy restart
+	rm -rf /var/lib/nova/nova.sqlite
    SHELL
    
   end
