@@ -155,5 +155,12 @@ end
    cpu.vm.box = "ubuntu/trusty64"
    cpu.vm.hostname = "cpu"
    cpu.vm.network "private_network", ip: "172.16.172.11"
+   cpu.vm.provision "shell", inline: <<-SHELL
+      apt-get install -y nova-compute sysfsutils
+      cp /vagrant/cpu-nova.conf /etc/nova/nova.conf
+      cp /vagrant/nova-compute.conf /etc/nova/nova-compute.conf
+      service nova-compute restart
+      rm -f /var/liob/nova/nova.sqlite
+   SHELL
   end
 end
