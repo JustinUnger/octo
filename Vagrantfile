@@ -1,3 +1,10 @@
+#
+#
+# OpenStack Kilo on Ubuntu 14.04 LTS
+#
+# Justin Unger, October 2015 <justinunger@gmail.com>
+#
+
 Vagrant.configure(2) do |config|
 
 config.vm.provider "virtualbox" do |v|
