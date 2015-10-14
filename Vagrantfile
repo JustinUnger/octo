@@ -132,7 +132,7 @@ end
 	openstack service create --name nova --description "OpenStack Compute" compute
 	openstack endpoint create --publicurl http://controller:8774/v2/%\\(tenant_id\\)s --internalurl http://controller:8774/v2/%\\(tenant_id\\)s --adminurl http://controller:8774/v2/%\\(tenant_id\\)s --region regionOne compute
 	apt-get install -y nova-api nova-cert nova-conductor nova-consoleauth nova-novncproxy nova-scheduler python-novaclient
-	cp /vagrant/nova.conf /etc/nova/nova.conf
+	cp /vagrant/ctrl-nova.conf /etc/nova/nova.conf
 	su -s /bin/sh -c "nova-manage db sync" nova	
 	service nova-api restart
 	service nova-cert restart
@@ -156,7 +156,7 @@ end
 	su -s /bin/sh -c "neutron-db-manage --config-file /etc/neutron/neutron.conf --config-file /etc/neutron/plugins/ml2/ml2_conf.ini upgrade head" neutron
 	service nova-api restart
 	service neutron-server restart
-	neutron ext-list
+	sleep 5 && neutron ext-list
    SHELL
    
   end
@@ -165,6 +165,28 @@ end
    net.vm.box = "ubuntu/trusty64"
    net.vm.hostname = "net"
    net.vm.network "private_network", ip: "172.16.172.12"
+   net.vm.network "public_network"
+   net.vm.provision "shell", inline: <<-SHELL
+     cp /vagrant/net-sysctl.conf /etc/sysctl.conf
+     sysctl -p
+     apt-get install -y neutron-plugin-ml2 neutron-plugin-openvswitch-agent neutron-l3-agent neutron-dhcp-agent neutron-metadata-agent
+     cp /vagrant/net-neutron.conf /etc/neutron/neutron.conf
+     cp /vagrant/ml2_conf.ini /etc/neutron/plugins/ml2/ml2_conf.ini
+     cp /vagrant/l3_agent.ini /etc/neutron/l3_agent.ini
+     cp /vagrant/dhcp_agent.ini /etc/neutron/dhcp_agent.ini
+     cp /vagrant/dnsmasq-neutron.conf /etc/neutron/dnsmasq-neutron.conf
+     cp /vagrant/metadata_agent.ini /etc/neutron/metadata_agent.ini
+     #pkill dnsmasq
+     service openvswitch-switch restart
+     ovs-vsctl add-br br-ex
+     ovs-vsctl add-port br-ex eth2
+     service netruon-plugin-openvswitch-agent restart
+     service neutron-l3-agent restart
+     service neutron-dhcp-agent restart
+     service neutron-metadata-agent restart
+     # to test run the next command on ctrl VM
+     # neutron agent-list 
+   SHELL
   end
 
   config.vm.define "cpu" do |cpu|
