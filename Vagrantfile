@@ -159,7 +159,7 @@ end
 	openstack endpoint create --publicurl http://controller:9696 --internalurl http://controller:9696 --adminurl http://controller:9696 --region regionOne network
 	apt-get install -y neutron-server neutron-plugin-ml2 python-neutronclient
 	cp /vagrant/neutron.conf /etc/neutron/neutron.conf
-	cp /vagrant/ml2_conf.ini /etc/neutron/plugins/ml2/ml2_conf.ini
+	cp /vagrant/ctrl-ml2_conf.ini /etc/neutron/plugins/ml2/ml2_conf.ini
 	su -s /bin/sh -c "neutron-db-manage --config-file /etc/neutron/neutron.conf --config-file /etc/neutron/plugins/ml2/ml2_conf.ini upgrade head" neutron
 	service nova-api restart
 	service neutron-server restart
@@ -178,7 +178,7 @@ end
      sysctl -p
      apt-get install -y neutron-plugin-ml2 neutron-plugin-openvswitch-agent neutron-l3-agent neutron-dhcp-agent neutron-metadata-agent
      cp /vagrant/net-neutron.conf /etc/neutron/neutron.conf
-     cp /vagrant/ml2_conf.ini /etc/neutron/plugins/ml2/ml2_conf.ini
+     cp /vagrant/net-ml2_conf.ini /etc/neutron/plugins/ml2/ml2_conf.ini
      cp /vagrant/l3_agent.ini /etc/neutron/l3_agent.ini
      cp /vagrant/dhcp_agent.ini /etc/neutron/dhcp_agent.ini
      cp /vagrant/dnsmasq-neutron.conf /etc/neutron/dnsmasq-neutron.conf
@@ -187,7 +187,10 @@ end
      service openvswitch-switch restart
      ovs-vsctl add-br br-ex
      ovs-vsctl add-port br-ex eth2
-     service netruon-plugin-openvswitch-agent restart
+     # the stock neutron_sudoers didn't seem to work here, so temporarily allow neutron user to do everything
+     # this may be a security risk, but this environment is intended for development only
+     cp /vagrant/neutron_sudoers /etc/sudoers.d/neutron_sudoers
+     service neutron-plugin-openvswitch-agent restart
      service neutron-l3-agent restart
      service neutron-dhcp-agent restart
      service neutron-metadata-agent restart
@@ -206,6 +209,17 @@ end
       cp /vagrant/nova-compute.conf /etc/nova/nova-compute.conf
       service nova-compute restart
       rm -f /var/liob/nova/nova.sqlite
+      cp /vagrant/cpu-sysctl.conf /etc/sysctl.conf
+      apt-get install -y neutron-plugin-ml2 neutron-plugin-openvswitch-agent
+      # looks like we can use the same neutron.conf from the net node on the cpu node
+      cp /vagrant/net-neutron.conf /etc/neutron/neutron.conf
+      cp /vagrant/cpu-ml2_conf.ini /etc/neutron/plugins/ml2/ml2_conf.ini
+      # the stock neutron_sudoers didn't seem to work here, so temporarily allow neutron user to do everything
+      # this may be a security risk, but this environment is intended for development only
+      cp /vagrant/neutron_sudoers /etc/sudoers.d/neutron_sudoers
+      service openvswitch-switch restart
+      service nova-compute restart
+      service neutron-plugin-openvswitch-agent restart
    SHELL
   end
 end
