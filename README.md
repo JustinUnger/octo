@@ -8,10 +8,13 @@ To bring up the environment, you must first install vagrant and add the vagrant-
 
 Vagrant install instructions: https://docs.vagrantup.com/v2/installation/index.html
 
+Once vagrant is installed, run: 
+
 ```
 $ vagrant plugin install vagrant-hostmanager
 $ vagrant up
 ```
+
 During the VM bring up, you will be asked which network interface on your host machine you wish to attach the external NIC on the net VM: 
 ```
 ==> net: Available bridged network interfaces:
