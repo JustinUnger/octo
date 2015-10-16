@@ -5,6 +5,9 @@ http://docs.openstack.org/kilo/install-guide/install/apt/content/
 This Vagrantfile will launch 3 VMs: ctrl, net and cpu. ctrl is the openstack "controller","net" is the network node and cpu is the compute node. 
 
 To bring up the environment, you must first install vagrant and add the vagrant-hostmanager plugin. After installation, you can simply bring up the 3 VMs.
+
+Vagrant install instructions: https://docs.vagrantup.com/v2/installation/index.html
+
 ```
 $ vagrant plugin install vagrant-hostmanager
 $ vagrant up
