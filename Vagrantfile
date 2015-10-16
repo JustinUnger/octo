@@ -9,7 +9,7 @@ Vagrant.configure(2) do |config|
 
 config.vm.provider "virtualbox" do |v|
   v.memory = 3072
-  v.cpus = 2
+  v.cpus = 1
 end
 
   config.hostmanager.enabled = true
@@ -25,6 +25,7 @@ end
    ctrl.vm.box = "ubuntu/trusty64"
    ctrl.vm.hostname = "controller"
    ctrl.vm.network "private_network", ip: "172.16.172.10"
+   ctrl.vm.network :forwarded_port, guest:6080, host:6080
 
    ctrl.vm.provision "shell", inline: <<-SHELL
 	#
@@ -172,8 +173,10 @@ end
    net.vm.box = "ubuntu/trusty64"
    net.vm.hostname = "net"
    net.vm.network "private_network", ip: "172.16.172.12"
-   net.vm.network "public_network"
+   net.vm.network "private_network", ip: "172.16.16.12"
+   net.vm.network "public_network", auto_config: false
    net.vm.provision "shell", inline: <<-SHELL
+     cp /vagrant/net-eth3.cfg /etc/network/interfaces.d/eth3.cfg
      cp /vagrant/net-sysctl.conf /etc/sysctl.conf
      sysctl -p
      apt-get install -y neutron-plugin-ml2 neutron-plugin-openvswitch-agent neutron-l3-agent neutron-dhcp-agent neutron-metadata-agent
@@ -186,7 +189,7 @@ end
      #pkill dnsmasq
      service openvswitch-switch restart
      ovs-vsctl add-br br-ex
-     ovs-vsctl add-port br-ex eth2
+     ovs-vsctl add-port br-ex eth3
      # the stock neutron_sudoers didn't seem to work here, so temporarily allow neutron user to do everything
      # this may be a security risk, but this environment is intended for development only
      cp /vagrant/neutron_sudoers /etc/sudoers.d/neutron_sudoers
@@ -203,6 +206,7 @@ end
    cpu.vm.box = "ubuntu/trusty64"
    cpu.vm.hostname = "cpu"
    cpu.vm.network "private_network", ip: "172.16.172.11"
+   cpu.vm.network "private_network", ip: "172.16.16.11"
    cpu.vm.provision "shell", inline: <<-SHELL
       apt-get install -y nova-compute sysfsutils
       cp /vagrant/cpu-nova.conf /etc/nova/nova.conf
