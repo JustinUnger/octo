@@ -372,7 +372,6 @@ JAMVNV1vX7GjufRbhS7o+dksM1bdoV9cTNti2lyhU+Nqj4NyC0RtgA==
 +--------------------------------------+----------------+--------+------------+-------------+----------+
 + nova get-vnc-console demo-instance1 novnc
 ERROR (Conflict): Instance not yet ready (HTTP 409) (Request-ID: req-22f5f347-c7dd-4401-b0d7-b4b4282259d8)
-```
 
 vagrant@controller:~$ nova list
 +--------------------------------------+----------------+--------+------------+-------------+----------------------+
