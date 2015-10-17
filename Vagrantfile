@@ -221,6 +221,7 @@ end
       # the stock neutron_sudoers didn't seem to work here, so temporarily allow neutron user to do everything
       # this may be a security risk, but this environment is intended for development only
       cp /vagrant/neutron_sudoers /etc/sudoers.d/neutron_sudoers
+      ifconfig eth3 up
       service openvswitch-switch restart
       service nova-compute restart
       service neutron-plugin-openvswitch-agent restart
