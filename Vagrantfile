@@ -128,7 +128,7 @@ end
 	source admin-openrc.sh
 	mkdir /tmp/images
 	wget -P /tmp/images http://download.cirros-cloud.net/0.3.4/cirros-0.3.4-x86_64-disk.img
-	glance image-create --name "cirros-0.3.4-x86_64" --file /tmp/images/cirros-0.3.4-x86_64-disk.img --disk-format qcow2 --container-format bare --visibility public --progress
+	sleep 5 && glance image-create --name cirros-0.3.4-x86_64 --file /tmp/images/cirros-0.3.4-x86_64-disk.img --disk-format qcow2 --container-format bare --visibility public --progress
 	glance image-list
 
 	#
@@ -174,9 +174,7 @@ end
    net.vm.hostname = "net"
    net.vm.network "private_network", ip: "172.16.172.12"
    net.vm.network "private_network", ip: "172.16.16.12"
-   net.vm.network "public_network", auto_config: false
    net.vm.provision "shell", inline: <<-SHELL
-     cp /vagrant/net-eth3.cfg /etc/network/interfaces.d/eth3.cfg
      cp /vagrant/net-sysctl.conf /etc/sysctl.conf
      sysctl -p
      apt-get install -y neutron-plugin-ml2 neutron-plugin-openvswitch-agent neutron-l3-agent neutron-dhcp-agent neutron-metadata-agent
@@ -189,7 +187,9 @@ end
      #pkill dnsmasq
      service openvswitch-switch restart
      ovs-vsctl add-br br-ex
-     ovs-vsctl add-port br-ex eth3
+     ifconfig br-ex 172.16.0.1/24 up
+     iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+     cp /vagrant/net-rc.local /etc/rc.local
      # the stock neutron_sudoers didn't seem to work here, so temporarily allow neutron user to do everything
      # this may be a security risk, but this environment is intended for development only
      cp /vagrant/neutron_sudoers /etc/sudoers.d/neutron_sudoers
@@ -221,7 +221,6 @@ end
       # the stock neutron_sudoers didn't seem to work here, so temporarily allow neutron user to do everything
       # this may be a security risk, but this environment is intended for development only
       cp /vagrant/neutron_sudoers /etc/sudoers.d/neutron_sudoers
-      ifconfig eth3 up
       service openvswitch-switch restart
       service nova-compute restart
       service neutron-plugin-openvswitch-agent restart
