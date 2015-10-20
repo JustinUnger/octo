@@ -26,7 +26,7 @@ end
    ctrl.vm.hostname = "controller"
    ctrl.vm.network "private_network", ip: "172.16.172.10"
    ctrl.vm.network :forwarded_port, guest:6080, host:6080
-   ctrl.vm.network :forwarded_port, guest:8080, host:80
+   ctrl.vm.network :forwarded_port, guest:80, host:8080
 
    ctrl.vm.provision "shell", inline: <<-SHELL
 	#
