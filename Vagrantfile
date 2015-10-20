@@ -26,6 +26,7 @@ end
    ctrl.vm.hostname = "controller"
    ctrl.vm.network "private_network", ip: "172.16.172.10"
    ctrl.vm.network :forwarded_port, guest:6080, host:6080
+   ctrl.vm.network :forwarded_port, guest:8080, host:80
 
    ctrl.vm.provision "shell", inline: <<-SHELL
 	#
@@ -165,6 +166,12 @@ end
 	service nova-api restart
 	service neutron-server restart
 	sleep 5 && neutron ext-list
+
+	#
+	# install horizon (dashboard service)
+	#
+	apt-get install -y openstack-dashboard
+        cp /vagrant/local_settings.py /etc/openstack-dashboard/local_settings.py
    SHELL
    
   end
