@@ -15,15 +15,12 @@ $ vagrant plugin install vagrant-hostmanager
 $ vagrant up
 ```
 
-During the VM bring up, you will be asked which network interface on your host machine you wish to attach the external NIC on the net VM: 
+During the VM bring up, you will be asked for your sudo password. This allows Vagrant to update your host machine's /etc/host file with the VMs mgmt interface IP addresses. This helps allow you to connect to the horizon dashboard from your host machine without having to setup port forwards, etc. 
+
 ```
-==> net: Available bridged network interfaces:
-1) en0: Wi-Fi (AirPort)
-2) p2p0
-3) awdl0
-==> net: When choosing an interface, it is usually the one that is
-==> net: being used to connect to the internet.
-    net: Which interface should the network bridge to? 1
+==> ctrl: Updating /etc/hosts file on active guest machines...
+==> ctrl: Updating /etc/hosts file on host machine (password may be required)...
+Password:
 ```
 
 After a while, you should have the 3 openstack nodes running: 
@@ -390,8 +387,8 @@ vagrant@controller:~$ nova get-vnc-console demo-instance1 novnc
 +-------+---------------------------------------------------------------------------------+
 ```
 
-Now use the connect to the URL you got from the last command with a browser on the host machine. Replace "controller" with "localhost". The Vagrant file has forwarded port 6080 on your host machine to port 6080 on your controller VM. 
+Surf to the above URL with your host browser, and you should have a VNC console into the tenant VM. 
 
-Viola, you should now have a VNC console into your VM. 
+If you want to play with horizon dashboard service you can connect to http://controller/horizon
 
 

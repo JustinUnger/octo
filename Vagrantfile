@@ -13,6 +13,7 @@ config.vm.provider "virtualbox" do |v|
 end
 
   config.hostmanager.enabled = true
+  config.hostmanager.manage_host = true
 
   config.vm.provision "shell", inline: "apt-get update"
   config.vm.provision "shell", inline: "apt-get install -y ntp"
