@@ -118,8 +118,10 @@ vagrant@controller:~$ neutron agent-list
 
 If things look good at this point, we can try to create the demo networks as described in http://docs.openstack.org/kilo/install-guide/install/apt/content/neutron_initial-external-network.html. There is a shell script you can run to do this quickly:
 
+NOTE: Here we have had to diverge a bit from the OpenStack install guide. I originally wanted to have the network node bridged onto the host system's internet connected interface. This however doesn't work out with wireless connections due to limits on the number of MACs that can be used on WLAN link. Virtualbox normally works around this by rewriting the L2 addresses in packets that come from bridged VM interfaces. This only works if the VM MAC address is known to VirtualBox. Because OpenStack likes to use a different L2 address than what is assigned to the physical interface, I opted to NAT traffic out the Vagrant default eth0 NAT'd interface. 
+
 ```
-vagrant@controller:~$ bash -x /vagrant/create-demo-nets.sh 
+vagrant@controller:~$ bash -x /vagrant/create-demo-nets-nat.sh 
 + source admin-openrc.sh
 ++ export OS_PROJECT_DOMAIN_ID=default
 ++ OS_PROJECT_DOMAIN_ID=default
@@ -143,7 +145,7 @@ Created a new network:
 | Field                     | Value                                |
 +---------------------------+--------------------------------------+
 | admin_state_up            | True                                 |
-| id                        | 6ac9956e-1992-4978-a341-66d9ad9f93b0 |
+| id                        | 7fac8c31-c2ed-4f94-81cb-8d1ca0e2eabd |
 | mtu                       | 0                                    |
 | name                      | ext-net                              |
 | provider:network_type     | flat                                 |
@@ -153,28 +155,28 @@ Created a new network:
 | shared                    | False                                |
 | status                    | ACTIVE                               |
 | subnets                   |                                      |
-| tenant_id                 | 0cbfe90e149a43e081cd4c8ea6324727     |
+| tenant_id                 | fdb7be0e684f4f74984db45360d1b64c     |
 +---------------------------+--------------------------------------+
-+ neutron subnet-create ext-net 10.0.0.0/8 --name ext-subnet --allocation-pool start=10.0.0.100,end=10.0.0.150 --disable-dhcp --gateway 10.0.0.1
++ neutron subnet-create ext-net 172.16.0.0/24 --name ext-subnet --allocation-pool start=172.16.0.100,end=172.16.0.150 --disable-dhcp --gateway 172.16.0.1
 Created a new subnet:
-+-------------------+----------------------------------------------+
-| Field             | Value                                        |
-+-------------------+----------------------------------------------+
-| allocation_pools  | {"start": "10.0.0.100", "end": "10.0.0.150"} |
-| cidr              | 10.0.0.0/8                                   |
-| dns_nameservers   |                                              |
-| enable_dhcp       | False                                        |
-| gateway_ip        | 10.0.0.1                                     |
-| host_routes       |                                              |
-| id                | 98dd4e12-5d80-4b8a-b451-024d860028e3         |
-| ip_version        | 4                                            |
-| ipv6_address_mode |                                              |
-| ipv6_ra_mode      |                                              |
-| name              | ext-subnet                                   |
-| network_id        | 6ac9956e-1992-4978-a341-66d9ad9f93b0         |
-| subnetpool_id     |                                              |
-| tenant_id         | 0cbfe90e149a43e081cd4c8ea6324727             |
-+-------------------+----------------------------------------------+
++-------------------+--------------------------------------------------+
+| Field             | Value                                            |
++-------------------+--------------------------------------------------+
+| allocation_pools  | {"start": "172.16.0.100", "end": "172.16.0.150"} |
+| cidr              | 172.16.0.0/24                                    |
+| dns_nameservers   |                                                  |
+| enable_dhcp       | False                                            |
+| gateway_ip        | 172.16.0.1                                       |
+| host_routes       |                                                  |
+| id                | b6d8e928-1ff0-46b9-80b9-a518559826f2             |
+| ip_version        | 4                                                |
+| ipv6_address_mode |                                                  |
+| ipv6_ra_mode      |                                                  |
+| name              | ext-subnet                                       |
+| network_id        | 7fac8c31-c2ed-4f94-81cb-8d1ca0e2eabd             |
+| subnetpool_id     |                                                  |
+| tenant_id         | fdb7be0e684f4f74984db45360d1b64c                 |
++-------------------+--------------------------------------------------+
 + source demo-openrc.sh
 ++ export OS_PROJECT_DOMAIN_ID=default
 ++ OS_PROJECT_DOMAIN_ID=default
@@ -198,14 +200,14 @@ Created a new network:
 | Field           | Value                                |
 +-----------------+--------------------------------------+
 | admin_state_up  | True                                 |
-| id              | 366f44ec-a5a5-4588-a0ee-06f3b740009b |
+| id              | 5b6194a3-9772-4cda-9648-2828e71430a8 |
 | mtu             | 0                                    |
 | name            | demo-net                             |
 | router:external | False                                |
 | shared          | False                                |
 | status          | ACTIVE                               |
 | subnets         |                                      |
-| tenant_id       | 736313e8c4554fd998672135c2857204     |
+| tenant_id       | 21c05033c7184517b6649aeb30c6e0e1     |
 +-----------------+--------------------------------------+
 + neutron subnet-create demo-net 192.168.1.0/24 --name demo-subnet --gateway 192.168.1.1
 Created a new subnet:
@@ -218,14 +220,14 @@ Created a new subnet:
 | enable_dhcp       | True                                             |
 | gateway_ip        | 192.168.1.1                                      |
 | host_routes       |                                                  |
-| id                | 93ed03cb-9b18-4769-a0e6-dcc27fc9cbd4             |
+| id                | 7b62da0d-aaf5-42b0-928b-bd42b9ba8eb1             |
 | ip_version        | 4                                                |
 | ipv6_address_mode |                                                  |
 | ipv6_ra_mode      |                                                  |
 | name              | demo-subnet                                      |
-| network_id        | 366f44ec-a5a5-4588-a0ee-06f3b740009b             |
+| network_id        | 5b6194a3-9772-4cda-9648-2828e71430a8             |
 | subnetpool_id     |                                                  |
-| tenant_id         | 736313e8c4554fd998672135c2857204                 |
+| tenant_id         | 21c05033c7184517b6649aeb30c6e0e1                 |
 +-------------------+--------------------------------------------------+
 + neutron router-create demo-router
 Created a new router:
@@ -234,14 +236,14 @@ Created a new router:
 +-----------------------+--------------------------------------+
 | admin_state_up        | True                                 |
 | external_gateway_info |                                      |
-| id                    | 139939ac-85df-48b5-bfc3-c803a05e97f9 |
+| id                    | 4b68f463-5061-47e9-9108-4f16a208befa |
 | name                  | demo-router                          |
 | routes                |                                      |
 | status                | ACTIVE                               |
-| tenant_id             | 736313e8c4554fd998672135c2857204     |
+| tenant_id             | 21c05033c7184517b6649aeb30c6e0e1     |
 +-----------------------+--------------------------------------+
 + neutron router-interface-add demo-router demo-subnet
-Added interface e583fe68-b7e9-421b-b13a-a089e9d3094c to router demo-router.
+Added interface fb52e059-90e1-455d-8de9-274038461d24 to router demo-router.
 + neutron router-gateway-set demo-router ext-net
 Set gateway for router demo-router
 ```
